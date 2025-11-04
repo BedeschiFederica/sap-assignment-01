@@ -1,6 +1,6 @@
 package delivery_service.domain;
 
-public interface DroneObserver {
+interface DroneObserver {
 
 	void notifyDeliveryEvent(DeliveryEvent event);
 }
