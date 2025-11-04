@@ -4,7 +4,9 @@ import common.ddd.Aggregate;
 
 public interface Delivery extends Aggregate<DeliveryId> {
 
-    void trackDelivery(UserId userId);
+    void startTracking();
+
+    void stopTracking();
 
     DeliveryState getDeliveryState();
 
