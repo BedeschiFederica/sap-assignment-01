@@ -1,12 +1,13 @@
 package account_service.domain;
 
 public class AccountImpl implements Account {
-
+    private final UserId userId;
     private final String userName;
     private final String password;
     private final long whenCreated;
 
-    public AccountImpl(final String userName, final String password) {
+    public AccountImpl(final UserId userId, final String userName, final String password) {
+        this.userId = userId;
         this.userName = userName;
         this.password = password;
         this.whenCreated = System.currentTimeMillis();
@@ -29,6 +30,6 @@ public class AccountImpl implements Account {
 
     @Override
     public UserId getId() {
-        return new UserId(this.userName);
+        return this.userId;
     }
 }
