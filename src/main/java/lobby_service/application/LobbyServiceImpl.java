@@ -15,14 +15,8 @@ public class LobbyServiceImpl implements LobbyService {
 	static Logger logger = Logger.getLogger("[Lobby Service]");
     
     private UserSessionRepository userSessionRepository;
-    private int sessionCount;
     private AccountService accountService;
     private DeliveryService deliveryService;
-    
-    public LobbyServiceImpl(){
-    	this.userSessionRepository = null;
-    	sessionCount = 0;
-    }
     
     @Override
 	public String login(final String userId, final String password) throws LoginFailedException {
@@ -32,11 +26,7 @@ public class LobbyServiceImpl implements LobbyService {
 			if (!this.accountService.isValidPassword(id, password)) {
 				throw new LoginFailedException();
 			}
-			this.sessionCount++;
-			final String sessionId = "user-session-" + this.sessionCount;
-			final UserSession userSession = new UserSession(sessionId, id);
-			this.userSessionRepository.addSession(userSession);
-			return userSession.sessionId();
+			return this.userSessionRepository.addSession(id);
 		} catch (final UserNotFoundException | ServiceNotAvailableException  ex) {
 			throw new LoginFailedException();
 		}
@@ -77,6 +67,10 @@ public class LobbyServiceImpl implements LobbyService {
 
 	public void bindDeliveryService(final DeliveryService service) {
 		this.deliveryService = service;
+	}
+
+	public void bindUserSessionRepository(final UserSessionRepository repository) {
+		this.userSessionRepository = repository;
 	}
 
 }
