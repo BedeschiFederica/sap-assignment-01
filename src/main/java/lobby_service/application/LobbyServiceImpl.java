@@ -5,7 +5,6 @@ import lobby_service.domain.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
 /**
  * 
  * Implementation of the Service entry point at the application layer
@@ -14,7 +13,7 @@ import java.util.logging.Logger;
 public class LobbyServiceImpl implements LobbyService {
 	static Logger logger = Logger.getLogger("[Lobby Service]");
     
-    private UserSessionRepository userSessionRepository;
+    private final UserSessions userSessionRepository = new UserSessions();
     private AccountService accountService;
     private DeliveryService deliveryService;
     
@@ -26,7 +25,7 @@ public class LobbyServiceImpl implements LobbyService {
 			if (!this.accountService.isValidPassword(id, password)) {
 				throw new LoginFailedException();
 			}
-			return this.userSessionRepository.addSession(id);
+			return this.userSessionRepository.createSession(id);
 		} catch (final UserNotFoundException | ServiceNotAvailableException  ex) {
 			throw new LoginFailedException();
 		}
@@ -67,10 +66,6 @@ public class LobbyServiceImpl implements LobbyService {
 
 	public void bindDeliveryService(final DeliveryService service) {
 		this.deliveryService = service;
-	}
-
-	public void bindUserSessionRepository(final UserSessionRepository repository) {
-		this.userSessionRepository = repository;
 	}
 
 }

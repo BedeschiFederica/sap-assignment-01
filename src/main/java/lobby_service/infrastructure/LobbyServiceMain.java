@@ -17,7 +17,6 @@ public class LobbyServiceMain {
 
 		lobby.bindAccountService(accountService);
 		lobby.bindDeliveryService(deliveryService);
-		lobby.bindUserSessionRepository(new SimpleFileBasedUserSessionRepository());
 		
 		Vertx.vertx().deployVerticle(new LobbyServiceController(lobby, LOBBY_SERVICE_PORT));
 	}
