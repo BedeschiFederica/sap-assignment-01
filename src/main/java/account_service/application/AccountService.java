@@ -13,9 +13,8 @@ public interface AccountService {
      * @param userName
      * @param password
      * @return
-     * @throws AccountAlreadyPresentException
      */
-	Account registerUser(String userName, String password) throws AccountAlreadyPresentException;
+	Account registerUser(String userName, String password);
 
 	/**
      * 

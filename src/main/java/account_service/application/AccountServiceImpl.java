@@ -13,15 +13,12 @@ public class AccountServiceImpl implements AccountService {
 	private AccountRepository accountRepository;
     
     @Override
-	public Account registerUser(final String userName, final String password) throws AccountAlreadyPresentException {
-		logger.log(Level.INFO, "Register User: " + userName + " " + password);		
-		if (this.accountRepository.isPresent(new UserId(userName))) {
-			throw new AccountAlreadyPresentException();
-		}
+	public Account registerUser(final String userName, final String password) {
+		logger.log(Level.INFO, "Register User: " + userName + " " + password);
 		var account = new AccountImpl(this.accountRepository.getNextId(), userName, password);
         try {
             this.accountRepository.addAccount(account);
-        } catch (InvalidAccountIdException e) {
+        } catch (InvalidAccountIdException | AccountAlreadyPresentException e) {
             throw new RuntimeException(e);
         }
         return account;
