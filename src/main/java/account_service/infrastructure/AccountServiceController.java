@@ -91,10 +91,6 @@ public class AccountServiceController extends VerticleBase {
 				reply.put("loginLink", LOGIN_PATH.replace(":accountId", account.getId().id()));
 				reply.put("accountLink", ACCOUNT_RESOURCE_PATH.replace(":accountId", account.getId().id()));
 				sendReply(context.response(), reply);
-			} catch (AccountAlreadyPresentException ex) {
-				reply.put("result", "error");
-				reply.put("error", ex.getMessage());
-				sendReply(context.response(), reply);
 			} catch (Exception ex1) {
 				sendError(context.response());
 			}
