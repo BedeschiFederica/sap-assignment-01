@@ -6,7 +6,7 @@ info:
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
-  version: 0.1.0
+  version: 0.1.1
 servers:
   - url: https://localhost:8080/api/v1
 tags:
@@ -181,12 +181,30 @@ paths:
           required: true
           schema:
             type: string
-        # - name: deliveryId
-          # in: query
-          # description: unique identifier of the delivery to create
-          # required: true
-          # schema:
-            # type: string
+        - name: weight
+          in: query
+          description: weight of the package to deliver
+          required: true
+          schema:
+            type: number
+        - name: startingPlace
+          in: query
+          description: the delivery starting place
+          required: true
+          schema:
+            type: string
+        - name: destinationPlace
+          in: query
+          description: the delivery destination place
+          required: true
+          schema:
+            type: string
+        - name: targetTime
+          in: query
+          description: the desired time to deliver the package
+          required: true
+          schema:
+            type: string
       responses:
         '200':
           description: delivery successfully created
