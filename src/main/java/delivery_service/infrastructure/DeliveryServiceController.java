@@ -1,13 +1,11 @@
 package delivery_service.infrastructure;
 
 import com.fasterxml.jackson.core.JsonParser;
-import delivery_service.application.InvalidTrackingException;
-import delivery_service.application.DeliveryNotFoundException;
-import delivery_service.application.DeliveryService;
-import delivery_service.application.TrackingSession;
+import delivery_service.application.*;
 import delivery_service.domain.Address;
 import delivery_service.domain.DeliveryDetail;
 import delivery_service.domain.DeliveryId;
+import delivery_service.domain.DeliveryStatus;
 import io.vertx.core.Future;
 import io.vertx.core.VerticleBase;
 import io.vertx.core.eventbus.EventBus;
@@ -124,6 +122,7 @@ public class DeliveryServiceController extends VerticleBase  {
 	 */
 	protected void getDeliveryDetail(final RoutingContext context) {
 		logger.log(Level.INFO, "get delivery detail");
+		context.request().endHandler(h -> {
 			final DeliveryId deliveryId = new DeliveryId(context.pathParam("deliveryId"));
 			var reply = new JsonObject();
 			try {
@@ -154,6 +153,7 @@ public class DeliveryServiceController extends VerticleBase  {
 			} catch (Exception ex) {
 				sendError(context.response());
 			}
+		});
 	}
 	
 	/**
@@ -167,7 +167,7 @@ public class DeliveryServiceController extends VerticleBase  {
 	protected void trackDelivery(final RoutingContext context) {
 		logger.log(Level.INFO, "TrackDelivery request - " + context.currentRoute().getPath());
 		context.request().handler(buf -> {
-			final DeliveryId deliveryId = new DeliveryId(context.pathParam("deliveryId"));
+			final DeliveryId deliveryId = new DeliveryId(buf.toJsonObject().getString("deliveryId"));
 			logger.log(Level.INFO, "Track delivery " + deliveryId.id());
 			var reply = new JsonObject();
 			try {
@@ -194,32 +194,30 @@ public class DeliveryServiceController extends VerticleBase  {
 	 */
 	protected void getDeliveryStatus(final RoutingContext context) {
 		logger.log(Level.INFO, "GetDeliveryStatus request - " + context.currentRoute().getPath());
-		context.request().handler(buf -> {
-			var  reply = new JsonObject();
+		context.request().endHandler(h -> {
+			final JsonObject reply = new JsonObject();
+			final DeliveryId deliveryId = new DeliveryId(context.pathParam("deliveryId"));
+			final String trackingSessionId = context.pathParam("trackingSessionId");
 			try {
-				final DeliveryId deliveryId = new DeliveryId(context.pathParam("deliveryId"));
-				final String trackingSessionId = context.pathParam("trackingSessionId");
-				//this.deliveryService.getDeliveryStatus(deliveryId, trackingSessionId);
-				/*var ps = gameService.getPlayerSession(playerSessionId);
-				ps.makeMove(x, y);				
-				reply.put("result", "accepted");
-				var gameId = context.pathParam("gameId");
-				var movePath = PLAYER_MOVE_RESOURCE_PATH
-						.replace(":gameId",gameId)
-						.replace(":playerSessionId",ps.getId());
-				reply.put("moveLink", movePath);
-				reply.put("gameLink", GAMES_RESOURCE_PATH + "/" + gameId);
-				sendReply(context.response(), reply);*/
-			/*} catch (InvalidMoveException ex) {
-				reply.put("result", "invalid-move");
-				sendReply(context.response(), reply);	*/
-			} catch (Exception ex1) {
-				reply.put("result", ex1.getMessage());
-				try {
-					sendReply(context.response(), reply);
-				} catch (Exception ex2) {
-					sendError(context.response());
-				}				
+				final DeliveryStatus deliveryStatus = this.deliveryService.getDeliveryStatus(deliveryId,
+						trackingSessionId);
+				reply.put("result", "ok");
+				final JsonObject deliveryJson = new JsonObject();
+				deliveryJson.put("deliveryId", deliveryId.id());
+				deliveryJson.put("deliveryStatus", deliveryStatus.getState().toString());
+				deliveryJson.put("timeLeft", deliveryStatus.getTimeLeft().days() + " days left");
+				reply.put("deliveryStatus", deliveryJson);
+				sendReply(context.response(), reply);
+			} catch (final DeliveryNotFoundException ex) {
+				reply.put("result", "error");
+				reply.put("error", "delivery-not-present");
+				sendReply(context.response(), reply);
+			} catch (final TrackingSessionNotFoundException ex) {
+				reply.put("result", "error");
+				reply.put("error", "tracking-session-not-present");
+				sendReply(context.response(), reply);
+			} catch (Exception ex) {
+				sendError(context.response());
 			}
 		});
 	}

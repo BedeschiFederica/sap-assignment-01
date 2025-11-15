@@ -2,9 +2,9 @@ package delivery_service.domain;
 
 import common.ddd.Entity;
 
-interface DeliveryStatus extends Entity<DeliveryId> {
+public interface DeliveryStatus extends Entity<DeliveryId> {
 
     DeliveryState getState();
 
-    DeliveryTime getTimeLeft();
+    DeliveryTime getTimeLeft() throws DeliveryNotShippedYetException;
 }

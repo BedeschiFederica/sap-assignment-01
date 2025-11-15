@@ -31,7 +31,20 @@ public class DeliveryServiceImpl implements DeliveryService {
 	}
 
 	@Override
-	public TrackingSession getTrackingSession(final String trackingSessionId) {
+	public DeliveryStatus getDeliveryStatus(final DeliveryId deliveryId, final String trackingSessionId)
+			throws DeliveryNotFoundException, TrackingSessionNotFoundException {
+		logger.log(Level.INFO, "get delivery " + deliveryId + " status");
+        if (!this.deliveryRepository.isPresent(deliveryId)) {
+			throw new DeliveryNotFoundException();
+		}
+		if (!this.trackingSessionRepository.isPresent(trackingSessionId)) {
+			throw new TrackingSessionNotFoundException();
+		}
+		return this.deliveryRepository.getDelivery(deliveryId).getDeliveryStatus();
+	}
+
+	@Override
+	public TrackingSession getTrackingSession(final String trackingSessionId) throws TrackingSessionNotFoundException {
 		return this.trackingSessionRepository.getTrackingSession(trackingSessionId);
 	}
 

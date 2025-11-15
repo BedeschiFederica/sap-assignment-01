@@ -40,7 +40,7 @@ public class DeliveryImpl implements Delivery {
         this.deliveryDetail = expectedShippingDate
                 .map(date -> new DeliveryDetailImpl(this.id, weight, startingPlace, destinationPlace, date))
                 .orElseGet(() -> new DeliveryDetailImpl(this.id, weight, startingPlace, destinationPlace));
-        this.deliveryStatus = null;
+        this.deliveryStatus = new DeliveryStatusImpl(this.id);
         this.observers = new ArrayList<>();
         // TODO: add the drone
     }
@@ -61,13 +61,8 @@ public class DeliveryImpl implements Delivery {
     }
 
     @Override
-    public DeliveryState getDeliveryState() {
-        return this.deliveryStatus.getState();
-    }
-
-    @Override
-    public int getDaysLeft() {
-        return this.deliveryStatus.getTimeLeft().days();
+    public DeliveryStatus getDeliveryStatus() {
+        return this.deliveryStatus;
     }
 
     @Override

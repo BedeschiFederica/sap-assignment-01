@@ -17,18 +17,25 @@ public class TrackingSessions implements Repository {
 	private final HashMap<String, TrackingSession> trackingSessions;
 
 	public TrackingSessions() {
-		trackingSessions = new HashMap<>();
+		this.trackingSessions = new HashMap<>();
 	}
 	
 	public TrackingSession createSession() {
 		final String id = TRACKING_SESSION_PREFIX + this.trackingSessions.size();
 		final TrackingSession trackingSession = new TrackingSession(id);
-		trackingSessions.put(id, trackingSession);
+		this.trackingSessions.put(id, trackingSession);
 		return trackingSession;
 	}
 
-	public TrackingSession getTrackingSession(final String trackingSessionId) {
-		return trackingSessions.get(trackingSessionId);
+	public TrackingSession getTrackingSession(final String trackingSessionId) throws TrackingSessionNotFoundException {
+		if (!this.isPresent(trackingSessionId)) {
+			throw new TrackingSessionNotFoundException();
+		}
+		return this.trackingSessions.get(trackingSessionId);
+	}
+
+	public boolean isPresent(final String trackingSessionId) {
+		return this.trackingSessions.get(trackingSessionId) != null;
 	}
 	
 }

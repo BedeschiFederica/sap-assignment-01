@@ -10,9 +10,7 @@ public interface Delivery extends Aggregate<DeliveryId> {
 
     void stopTracking();
 
-    DeliveryState getDeliveryState();
-
-    int getDaysLeft();
+    DeliveryStatus getDeliveryStatus();
 
     void addDeliveryObserver(DeliveryObserver observer);
 }

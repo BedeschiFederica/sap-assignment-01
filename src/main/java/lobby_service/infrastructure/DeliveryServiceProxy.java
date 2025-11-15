@@ -71,50 +71,35 @@ public class DeliveryServiceProxy implements DeliveryService {
     }
 
     @Override
-    public String trackDelivery(DeliveryId deliveryId) throws TrackDeliveryFailedException, ServiceNotAvailableException {
-        return "";
-    }
+    public String trackDelivery(final DeliveryId deliveryId) throws TrackDeliveryFailedException, ServiceNotAvailableException {
+        final HttpClient client = HttpClient.newHttpClient();
+        final JsonObject body = new JsonObject();
+        body.put("deliveryId", deliveryId.id());
 
-	/*
-	@Override
-	public String joinGame(UserId userId, String gameId, TTTSymbol symbol) throws InvalidJoinGameException, JoinGameFailedException, ServiceNotAvailableException {
-	    HttpClient client = HttpClient.newHttpClient();
-        JsonObject body = new JsonObject();
-        body.put("userId", userId.id());
-        body.put("symbol", symbol.equals(TTTSymbol.X) ? "X" : "O");
-        		
-        String joinGameEndpoint = serviceURI + "/api/v1/games/" + gameId + "/join";
+        final String trackDeliveryResourceEndpoint = serviceURI + "/api/v1/deliveries/" + deliveryId.id() + "/track";
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(joinGameEndpoint))
+                .uri(URI.create(trackDeliveryResourceEndpoint))
                 .header("Accept", "application/json")
-                .POST(BodyPublishers.ofString(body.toString()))
+                .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
                 .build();
 
-        HttpResponse<String> response = null;
+        HttpResponse<String> response;
         try {
-        	response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        	System.out.println("Response Code: " + response.statusCode());
+            response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            System.out.println("Response Code: " + response.statusCode());
         } catch (Exception ex) {
-        	ex.printStackTrace();
-        	throw new JoinGameFailedException();
+            ex.printStackTrace();
+            throw new TrackDeliveryFailedException();
         }
-        if (response.statusCode() == 200) {
-            JsonObject json = new JsonObject(response.body());	                               
-            var res = json.getString("result");
-            if (res.equals("ok")) {
-				var playerSessionId = json.getString("playerSessionId");
-				return playerSessionId;
- 		    } else if (res.equals("error")) {
- 		    	throw new InvalidJoinGameException();
-            } else {
-            	throw new JoinGameFailedException();
-            }
-        } else {
+
+        if (response.statusCode() != 200) {
             System.out.println("POST request failed: " + response.body());
-			throw new ServiceNotAvailableException();
+            throw new ServiceNotAvailableException();
         }
-	}*/
-	
-
-
+        final JsonObject responseBody = new JsonObject(response.body());
+        if (responseBody.getString("result").equals("error")) {
+            throw new TrackDeliveryFailedException();
+        }
+        return responseBody.getString("trackingSessionId");
+    }
 }

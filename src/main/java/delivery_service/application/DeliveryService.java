@@ -23,6 +23,17 @@ public interface DeliveryService {
      * @throws DeliveryNotFoundException
      */
 	DeliveryDetail getDeliveryDetail(DeliveryId deliveryId) throws DeliveryNotFoundException;
+
+	/**
+	 *
+	 * Get delivery detail.
+	 *
+	 * @param deliveryId
+	 * @return
+	 * @throws DeliveryNotFoundException
+	 */
+	DeliveryStatus getDeliveryStatus(DeliveryId deliveryId, String trackingSessionId)
+			throws DeliveryNotFoundException, TrackingSessionNotFoundException;
 		
 	/**
 	 * 
@@ -31,7 +42,7 @@ public interface DeliveryService {
 	 * @param trackingSessionId
 	 * @return
 	 */
-	TrackingSession getTrackingSession(String trackingSessionId);
+	TrackingSession getTrackingSession(String trackingSessionId) throws TrackingSessionNotFoundException;
 	
 	/**
 	 * 
