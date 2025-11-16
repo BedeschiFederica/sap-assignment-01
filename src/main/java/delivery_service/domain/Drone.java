@@ -1,6 +1,8 @@
 package delivery_service.domain;
 
-interface Drone {    // TODO complete
+interface Drone {
+
+    void startDrone();
 
     void addDroneObserver(DroneObserver observer);
 }

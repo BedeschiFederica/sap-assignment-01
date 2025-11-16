@@ -2,11 +2,11 @@ package delivery_service.domain;
 
 import java.util.*;
 
-public class DeliveryImpl implements Delivery {
+public class DeliveryImpl implements Delivery, DroneObserver {
 
     private final DeliveryId id;
     private final DeliveryDetail deliveryDetail;
-    private final DeliveryStatus deliveryStatus;
+    private final MutableDeliveryStatus deliveryStatus;
     private final List<DeliveryObserver> observers;
     private boolean isInTracking;
 
@@ -42,7 +42,9 @@ public class DeliveryImpl implements Delivery {
                 .orElseGet(() -> new DeliveryDetailImpl(this.id, weight, startingPlace, destinationPlace));
         this.deliveryStatus = new DeliveryStatusImpl(this.id);
         this.observers = new ArrayList<>();
-        // TODO: add the drone
+        final Drone drone = new DroneImpl(this.deliveryDetail);
+        drone.addDroneObserver(this);
+        drone.startDrone();
     }
 
     @Override
@@ -75,9 +77,18 @@ public class DeliveryImpl implements Delivery {
         return this.id;
     }
 
-    private void notifyDeliveryEvent(final DeliveryEvent event) {
+    @Override
+    public void notifyDeliveryEvent(final DeliveryEvent event) {
+        if (event instanceof Shipped) {
+            this.deliveryStatus.setDeliveryState(DeliveryState.SHIPPING);
+            this.deliveryStatus.setTimeLeft(((Shipped) event).timeLeft());
+        } else if (event instanceof TimeElapsed) {
+            this.deliveryStatus.subDeliveryTime(((TimeElapsed) event).time());
+        } else if (event instanceof Delivered) {
+            this.deliveryStatus.setDeliveryState(DeliveryState.DELIVERED);
+        }
         if (this.isInTracking) {
-            this.observers.forEach(o -> o.notifyDeliveryEvent(event));
+            this.observers.forEach(obs -> obs.notifyDeliveryEvent(event));
         }
     }
 }

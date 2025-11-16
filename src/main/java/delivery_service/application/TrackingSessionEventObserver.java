@@ -1,6 +1,7 @@
 package delivery_service.application;
 
 import common.hexagonal.OutBoundPort;
+import delivery_service.domain.DeliveryTime;
 
 /**
  * 
@@ -36,4 +37,12 @@ public interface TrackingSessionEventObserver {
 	 * @param trackingSessionId
 	 */
 	void delivered(String trackingSessionId);
+
+	/**
+	 *
+	 * Notify that time elapsed while delivering
+	 *
+	 * @param trackingSessionId
+	 */
+	void timeElapsed(String trackingSessionId, DeliveryTime timeElapsed);
 }

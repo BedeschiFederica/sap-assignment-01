@@ -28,9 +28,11 @@ public class TrackingSession implements DeliveryObserver {
 
 	public void notifyDeliveryEvent(final DeliveryEvent ev) {
 		if (ev instanceof Shipped) {
-			trackingSessionEventNotifier.shipped(trackingSessionId);
+			this.trackingSessionEventNotifier.shipped(this.trackingSessionId);
+		} else if (ev instanceof TimeElapsed) {
+			this.trackingSessionEventNotifier.timeElapsed(this.trackingSessionId, ((TimeElapsed) ev).time());
 		} else if (ev instanceof Delivered) {
-			trackingSessionEventNotifier.delivered(trackingSessionId);
+			this.trackingSessionEventNotifier.delivered(this.trackingSessionId);
 		}
 	}
 		

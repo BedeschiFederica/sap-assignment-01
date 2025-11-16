@@ -1,18 +1,13 @@
 package delivery_service.infrastructure;
 
-import com.fasterxml.jackson.core.JsonParser;
 import delivery_service.application.*;
-import delivery_service.domain.Address;
-import delivery_service.domain.DeliveryDetail;
-import delivery_service.domain.DeliveryId;
-import delivery_service.domain.DeliveryStatus;
+import delivery_service.domain.*;
 import io.vertx.core.Future;
 import io.vertx.core.VerticleBase;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -205,7 +200,9 @@ public class DeliveryServiceController extends VerticleBase  {
 				final JsonObject deliveryJson = new JsonObject();
 				deliveryJson.put("deliveryId", deliveryId.id());
 				deliveryJson.put("deliveryStatus", deliveryStatus.getState().toString());
-				deliveryJson.put("timeLeft", deliveryStatus.getTimeLeft().days() + " days left");
+				if (deliveryStatus.isTimeLeftAvailable()) {
+					deliveryJson.put("timeLeft", deliveryStatus.getTimeLeft().days() + " days left");
+				}
 				reply.put("deliveryStatus", deliveryJson);
 				sendReply(context.response(), reply);
 			} catch (final DeliveryNotFoundException ex) {
@@ -217,6 +214,7 @@ public class DeliveryServiceController extends VerticleBase  {
 				reply.put("error", "tracking-session-not-present");
 				sendReply(context.response(), reply);
 			} catch (Exception ex) {
+				logger.info(ex.getClass().toString());
 				sendError(context.response());
 			}
 		});
@@ -225,53 +223,56 @@ public class DeliveryServiceController extends VerticleBase  {
 
 	/* Handling subscribers using web sockets */
 	
-	protected void handleEventSubscription(HttpServer server, String path) {
+	protected void handleEventSubscription(final HttpServer server, final String path) {
 		server.webSocketHandler(webSocket -> {
-			logger.log(Level.INFO, "New TTT subscription accepted.");
+			if (webSocket.path().equals(path)) {
+				logger.log(Level.INFO, "New subscription accepted.");
 
-			/* 
-			 * 
-			 * Receiving a first message including the id of the game
-			 * to observe 
-			 * 
-			 */
-			webSocket.textMessageHandler(openMsg -> {
-				logger.log(Level.INFO, "For game: " + openMsg);
-				JsonObject obj = new JsonObject(openMsg);
-				String playerSessionId = obj.getString("playerSessionId");
-				
-				
-				/* 
-				 * Subscribing events on the event bus to receive
-				 * events concerning the game, to be notified 
-				 * to the frontend using the websocket
-				 * 
+				/*
+				 *
+				 * Receiving a first message including the id of the delivery
+				 * to observe
+				 *
 				 */
-				EventBus eb = vertx.eventBus();
-				
-				eb.consumer(playerSessionId, msg -> {
-					JsonObject ev = (JsonObject) msg.body();
-					logger.log(Level.INFO, "Event: " + ev.encodePrettily());
-					webSocket.writeTextMessage(ev.encodePrettily());
+				webSocket.textMessageHandler(openMsg -> {
+					logger.log(Level.INFO, "For delivery: " + openMsg);
+					JsonObject obj = new JsonObject(openMsg);
+					final String trackingSessionId = obj.getString("trackingSessionId");
+
+
+					/*
+					 * Subscribing events on the event bus to receive
+					 * events concerning the delivery, to be notified
+					 * to the frontend using the websocket
+					 *
+					 */
+					EventBus eventBus = this.vertx.eventBus();
+
+					eventBus.consumer(trackingSessionId, msg -> {
+						final JsonObject event = (JsonObject) msg.body();
+						logger.log(Level.INFO, "Event: " + event.encodePrettily());
+						webSocket.writeTextMessage(event.encodePrettily());
+					});
+
+					try {
+						final TrackingSession trackingSession = this.deliveryService.getTrackingSession(trackingSessionId);
+						trackingSession.getTrackingSessionEventNotifier().enableEventNotification(trackingSessionId);
+					} catch (final TrackingSessionNotFoundException e) {
+						throw new RuntimeException(e);
+					}
 				});
-				
-				/*var ps = gameService.getPlayerSession(playerSessionId);
-				var en = ps.getPlayerSessionEventNotifier();
-				en.enableEventNotification(playerSessionId);*/
-								
-			});
+			}
 		});
 	}
 	
 	/* Aux methods */
-	
 
-	private void sendReply(HttpServerResponse response, JsonObject reply) {
+	private void sendReply(final HttpServerResponse response, final JsonObject reply) {
 		response.putHeader("content-type", "application/json");
 		response.end(reply.toString());
 	}
 	
-	private void sendError(HttpServerResponse response) {
+	private void sendError(final HttpServerResponse response) {
 		response.setStatusCode(500);
 		response.putHeader("content-type", "application/json");
 		response.end();

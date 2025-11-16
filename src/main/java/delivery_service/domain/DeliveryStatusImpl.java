@@ -25,6 +25,11 @@ class DeliveryStatusImpl implements MutableDeliveryStatus {
     }
 
     @Override
+    public boolean isTimeLeftAvailable() {
+        return this.timeLeft.isPresent();
+    }
+
+    @Override
     public DeliveryId getId() {
         return this.id;
     }
@@ -32,6 +37,9 @@ class DeliveryStatusImpl implements MutableDeliveryStatus {
     @Override
     public void setDeliveryState(final DeliveryState state) {
         this.state = state;
+        if (this.state.equals(DeliveryState.DELIVERED)) {
+            this.timeLeft = Optional.empty();
+        }
     }
 
     @Override
