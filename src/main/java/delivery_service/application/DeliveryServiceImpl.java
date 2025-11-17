@@ -11,7 +11,7 @@ import java.util.logging.Logger;
  * Implementation of the Delivery Service entry point at the application layer
  * 
  */
-public class DeliveryServiceImpl implements DeliveryService {
+public class DeliveryServiceImpl implements DeliveryService, DeliveryObserver {
 	static Logger logger = Logger.getLogger("[Delivery Service]");
 
     private DeliveryRepository deliveryRepository;
@@ -53,6 +53,7 @@ public class DeliveryServiceImpl implements DeliveryService {
 										final Address destinationPlace, final Calendar expectedShippingDate) {
 		final Delivery delivery = new DeliveryImpl(this.deliveryRepository.getNextId(), weight, startingPlace,
 				destinationPlace, expectedShippingDate);
+		delivery.addDeliveryObserver(this);
 		logger.log(Level.INFO, "create New Delivery " + delivery.getId().id());
         try {
             this.deliveryRepository.addDelivery(delivery);
@@ -72,8 +73,7 @@ public class DeliveryServiceImpl implements DeliveryService {
         } catch (final DeliveryNotFoundException e) {
             throw new InvalidTrackingException();
         }
-        delivery.startTracking();
-		var trackingSession = this.trackingSessionRepository.createSession();
+		final TrackingSession trackingSession = this.trackingSessionRepository.createSession();
 		trackingSession.bindTrackingSessionEventNotifier(observer);
 		delivery.addDeliveryObserver(trackingSession);
 		return trackingSession;
@@ -81,5 +81,22 @@ public class DeliveryServiceImpl implements DeliveryService {
 	
     public void bindDeliveryRepository(final DeliveryRepository repo) {
     	this.deliveryRepository = repo;
+		this.deliveryRepository.getAllDeliveries().stream()
+				.filter(delivery -> !delivery.getDeliveryStatus().getState().equals(DeliveryState.DELIVERED))
+				.forEach(delivery -> delivery.addDeliveryObserver(this));
     }
+
+	@Override
+	public void notifyDeliveryEvent(final DeliveryEvent event) {
+		logger.info("DeliveryService: event " + event);
+		try {
+			if (event instanceof Shipped) {
+				this.deliveryRepository.updateDeliveryState(((Shipped) event).id(), DeliveryState.SHIPPING);
+			} else if (event instanceof Delivered) {
+				this.deliveryRepository.updateDeliveryState(((Delivered) event).id(), DeliveryState.DELIVERED);
+			}
+		} catch (final DeliveryNotFoundException e) {
+			throw new RuntimeException(e);
+		}
+	}
 }

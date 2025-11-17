@@ -8,7 +8,6 @@ public class DeliveryImpl implements Delivery, DroneObserver {
     private final DeliveryDetail deliveryDetail;
     private final MutableDeliveryStatus deliveryStatus;
     private final List<DeliveryObserver> observers;
-    private boolean isInTracking;
 
     public DeliveryImpl(
             final DeliveryId deliveryId,
@@ -17,7 +16,28 @@ public class DeliveryImpl implements Delivery, DroneObserver {
             final Address destinationPlace,
             final Calendar expectedShippingDate
     ) {
-       this(deliveryId, weight, startingPlace, destinationPlace, Optional.of(expectedShippingDate));
+        this(deliveryId, weight, startingPlace, destinationPlace, Optional.of(expectedShippingDate));
+    }
+
+    public DeliveryImpl(
+            final DeliveryId deliveryId,
+            final double weight,
+            final Address startingPlace,
+            final Address destinationPlace,
+            final Calendar expectedShippingDate,
+            final DeliveryState deliveryState
+    ) {
+        this.id = deliveryId;
+        this.deliveryDetail = new DeliveryDetailImpl(this.id, weight, startingPlace, destinationPlace,
+                expectedShippingDate);
+        this.deliveryStatus = new DeliveryStatusImpl(this.id);
+        this.deliveryStatus.setDeliveryState(deliveryState);
+        this.observers = new ArrayList<>();
+        if (!deliveryState.equals(DeliveryState.DELIVERED)) {
+            final Drone drone = new DroneImpl(this.deliveryDetail);
+            drone.addDroneObserver(this);
+            drone.startDrone();
+        }
     }
 
     public DeliveryImpl(
@@ -53,18 +73,13 @@ public class DeliveryImpl implements Delivery, DroneObserver {
     }
 
     @Override
-    public void startTracking() {
-        this.isInTracking = true;
-    }
-
-    @Override
-    public void stopTracking() {
-        this.isInTracking = false;
-    }
-
-    @Override
     public DeliveryStatus getDeliveryStatus() {
         return this.deliveryStatus;
+    }
+
+    @Override
+    public void updateDeliveryState(final DeliveryState deliveryState) {
+        this.deliveryStatus.setDeliveryState(deliveryState);
     }
 
     @Override
@@ -79,6 +94,7 @@ public class DeliveryImpl implements Delivery, DroneObserver {
 
     @Override
     public void notifyDeliveryEvent(final DeliveryEvent event) {
+        System.out.println("Event " + event);
         if (event instanceof Shipped) {
             this.deliveryStatus.setDeliveryState(DeliveryState.SHIPPING);
             this.deliveryStatus.setTimeLeft(((Shipped) event).timeLeft());
@@ -87,8 +103,6 @@ public class DeliveryImpl implements Delivery, DroneObserver {
         } else if (event instanceof Delivered) {
             this.deliveryStatus.setDeliveryState(DeliveryState.DELIVERED);
         }
-        if (this.isInTracking) {
-            this.observers.forEach(obs -> obs.notifyDeliveryEvent(event));
-        }
+        this.observers.forEach(obs -> obs.notifyDeliveryEvent(event));
     }
 }

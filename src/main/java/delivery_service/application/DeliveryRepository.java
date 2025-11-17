@@ -7,6 +7,8 @@ import common.ddd.Repository;
 import common.hexagonal.OutBoundPort;
 import delivery_service.domain.*;
 
+import java.util.Collection;
+
 /**
  * 
  * Delivery Repository
@@ -22,4 +24,8 @@ public interface DeliveryRepository extends Repository {
 	boolean isPresent(DeliveryId deliveryId);
 
 	Delivery getDelivery(DeliveryId deliveryId) throws DeliveryNotFoundException;
+
+	void updateDeliveryState(DeliveryId deliveryId, DeliveryState deliveryState) throws DeliveryNotFoundException;
+
+	Collection<Delivery> getAllDeliveries();
 }

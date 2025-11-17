@@ -6,11 +6,9 @@ public interface Delivery extends Aggregate<DeliveryId> {
 
     DeliveryDetail getDeliveryDetail();
 
-    void startTracking();
-
-    void stopTracking();
-
     DeliveryStatus getDeliveryStatus();
+
+    void updateDeliveryState(DeliveryState deliveryState);
 
     void addDeliveryObserver(DeliveryObserver observer);
 }
