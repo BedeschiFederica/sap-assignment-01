@@ -12,10 +12,7 @@ import io.vertx.core.json.JsonObject;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -98,7 +95,7 @@ public class FileBasedDeliveryRepository implements DeliveryRepository {
 			deliveriesDB.close();
 			var array = new JsonArray(sb.toString());
 			for (int i = 0; i < array.size(); i++) {
-				final Delivery delivery = fromJson(array.getJsonObject(i));
+				final Delivery delivery = DeliveryJsonConverter.fromJson(array.getJsonObject(i));
 				this.deliveries.put(delivery.getId(), delivery);
 			}
 		} catch (Exception ex) {
@@ -108,32 +105,14 @@ public class FileBasedDeliveryRepository implements DeliveryRepository {
 		}
 	}
 
-	private Delivery fromJson(final JsonObject json) {
-		return new DeliveryImpl(
-				new DeliveryId(json.getString("deliveryId")),
-				json.getNumber("weight").doubleValue(),
-				new Address(
-						json.getJsonObject("startingPlace").getString("street"),
-						json.getJsonObject("startingPlace").getNumber("number").intValue()
-				),
-				new Address(
-						json.getJsonObject("destinationPlace").getString("street"),
-						json.getJsonObject("destinationPlace").getNumber("number").intValue()
-				),
-				new Calendar.Builder().setDate(
-						json.getJsonObject("targetTime").getNumber("year").intValue(),
-						json.getJsonObject("targetTime").getNumber("month").intValue(),
-						json.getJsonObject("targetTime").getNumber("day").intValue()
-				).build(),
-				DeliveryState.valueOfLabel(json.getString("state"))
-		);
-	}
-
 	private void saveOnDB() {
 		try {
 			JsonArray list = new JsonArray();
 			for (final Delivery delivery: this.deliveries.values()) {
-				list.add(this.toJson(delivery));
+				list.add(DeliveryJsonConverter.toJson(
+						delivery.getDeliveryDetail(),
+						Optional.of(delivery.getDeliveryStatus().getState())
+				));
 			}
 			var usersDB = new FileWriter(DB_DELIVERIES);
 			usersDB.append(list.encodePrettily());
@@ -142,26 +121,5 @@ public class FileBasedDeliveryRepository implements DeliveryRepository {
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
-	}
-
-	private JsonObject toJson(final Delivery delivery) {
-		final JsonObject obj = new JsonObject();
-		obj.put("deliveryId", delivery.getId().id());
-		obj.put("weight", delivery.getDeliveryDetail().weight());
-		obj.put("startingPlace", new JsonObject(Map.of(
-				"street", delivery.getDeliveryDetail().startingPlace().street(),
-				"number", delivery.getDeliveryDetail().startingPlace().number())
-		));
-		obj.put("destinationPlace", new JsonObject(Map.of(
-				"street", delivery.getDeliveryDetail().destinationPlace().street(),
-				"number", delivery.getDeliveryDetail().destinationPlace().number())
-		));
-		obj.put("targetTime", new JsonObject(Map.of(
-				"year", delivery.getDeliveryDetail().expectedShippingDate().get(Calendar.YEAR),
-				"month", delivery.getDeliveryDetail().expectedShippingDate().get(Calendar.MONTH),
-				"day", delivery.getDeliveryDetail().expectedShippingDate().get(Calendar.DAY_OF_MONTH))
-		));
-		obj.put("state", delivery.getDeliveryStatus().getState().getLabel());
-		return obj;
 	}
 }

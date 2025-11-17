@@ -15,6 +15,7 @@ import io.vertx.ext.web.handler.StaticHandler;
 
 import java.util.Calendar;
 import java.util.Map;
+import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -77,25 +78,15 @@ public class DeliveryServiceController extends VerticleBase  {
 	protected void createNewDelivery(final RoutingContext context) {
 		logger.log(Level.INFO, "CreateNewDelivery request - " + context.currentRoute().getPath());
 		context.request().handler(buf -> {
-			JsonObject deliveryDetail = buf.toJsonObject();
-			logger.log(Level.INFO, "Payload: " + deliveryDetail);
+			final JsonObject deliveryDetailJson = buf.toJsonObject();
+			logger.log(Level.INFO, "Payload: " + deliveryDetailJson);
 			var reply = new JsonObject();
-			try {
+			try {	// TODO add immediate time, check date > now
 				final DeliveryId deliveryId = this.deliveryService.createNewDelivery(
-						deliveryDetail.getNumber("weight").doubleValue(),
-						new Address(
-								deliveryDetail.getJsonObject("startingPlace").getString("street"),
-								deliveryDetail.getJsonObject("startingPlace").getNumber("number").intValue()
-						),
-						new Address(
-								deliveryDetail.getJsonObject("destinationPlace").getString("street"),
-								deliveryDetail.getJsonObject("destinationPlace").getNumber("number").intValue()
-						),
-						new Calendar.Builder().setDate(
-								deliveryDetail.getJsonObject("targetTime").getNumber("year").intValue(),
-								deliveryDetail.getJsonObject("targetTime").getNumber("month").intValue(),
-								deliveryDetail.getJsonObject("targetTime").getNumber("day").intValue()
-						).build()
+						deliveryDetailJson.getNumber("weight").doubleValue(),
+						DeliveryJsonConverter.getAddress(deliveryDetailJson, "startingPlace"),
+						DeliveryJsonConverter.getAddress(deliveryDetailJson, "destinationPlace"),
+						DeliveryJsonConverter.getTargetTime(deliveryDetailJson)
 				);
 				reply.put("result", "ok");
 				reply.put("deliveryId", deliveryId.id());
@@ -121,25 +112,14 @@ public class DeliveryServiceController extends VerticleBase  {
 			final DeliveryId deliveryId = new DeliveryId(context.pathParam("deliveryId"));
 			var reply = new JsonObject();
 			try {
-				final DeliveryDetail deliveryDetail = this.deliveryService.getDeliveryDetail(deliveryId);
 				reply.put("result", "ok");
-				var deliveryJson = new JsonObject();
-				deliveryJson.put("deliveryId", deliveryId.id());
-				deliveryJson.put("weight", deliveryDetail.weight());
-				deliveryJson.put("startingPlace", new JsonObject(Map.of(
-						"street", deliveryDetail.startingPlace().street(),
-						"number", deliveryDetail.startingPlace().number())
-				));
-				deliveryJson.put("destinationPlace", new JsonObject(Map.of(
-						"street", deliveryDetail.destinationPlace().street(),
-						"number", deliveryDetail.destinationPlace().number())
-				));
-				deliveryJson.put("targetTime", new JsonObject(Map.of(
-						"year", deliveryDetail.expectedShippingDate().get(Calendar.YEAR),
-						"month", deliveryDetail.expectedShippingDate().get(Calendar.MONTH),
-						"day", deliveryDetail.expectedShippingDate().get(Calendar.DAY_OF_MONTH))
-				));
-				reply.put("deliveryDetail", deliveryJson);
+				reply.put(
+						"deliveryDetail",
+						DeliveryJsonConverter.toJson(
+								this.deliveryService.getDeliveryDetail(deliveryId),
+								Optional.empty()
+						)
+				);
 				sendReply(context.response(), reply);
 			} catch (final DeliveryNotFoundException ex) {
 				reply.put("result", "error");

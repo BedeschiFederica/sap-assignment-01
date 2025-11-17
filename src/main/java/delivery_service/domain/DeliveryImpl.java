@@ -1,5 +1,7 @@
 package delivery_service.domain;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 public class DeliveryImpl implements Delivery, DroneObserver {
@@ -8,16 +10,6 @@ public class DeliveryImpl implements Delivery, DroneObserver {
     private final DeliveryDetail deliveryDetail;
     private final MutableDeliveryStatus deliveryStatus;
     private final List<DeliveryObserver> observers;
-
-    public DeliveryImpl(
-            final DeliveryId deliveryId,
-            final double weight,
-            final Address startingPlace,
-            final Address destinationPlace,
-            final Calendar expectedShippingDate
-    ) {
-        this(deliveryId, weight, startingPlace, destinationPlace, Optional.of(expectedShippingDate));
-    }
 
     public DeliveryImpl(
             final DeliveryId deliveryId,
@@ -34,10 +26,18 @@ public class DeliveryImpl implements Delivery, DroneObserver {
         this.deliveryStatus.setDeliveryState(deliveryState);
         this.observers = new ArrayList<>();
         if (!deliveryState.equals(DeliveryState.DELIVERED)) {
-            final Drone drone = new DroneImpl(this.deliveryDetail);
-            drone.addDroneObserver(this);
-            drone.startDrone();
+            this.initDrone();
         }
+    }
+
+    public DeliveryImpl(
+            final DeliveryId deliveryId,
+            final double weight,
+            final Address startingPlace,
+            final Address destinationPlace,
+            final Calendar expectedShippingDate
+    ) {
+        this(deliveryId, weight, startingPlace, destinationPlace, Optional.of(expectedShippingDate));
     }
 
     public DeliveryImpl(
@@ -62,9 +62,7 @@ public class DeliveryImpl implements Delivery, DroneObserver {
                 .orElseGet(() -> new DeliveryDetailImpl(this.id, weight, startingPlace, destinationPlace));
         this.deliveryStatus = new DeliveryStatusImpl(this.id);
         this.observers = new ArrayList<>();
-        final Drone drone = new DroneImpl(this.deliveryDetail);
-        drone.addDroneObserver(this);
-        drone.startDrone();
+        this.initDrone();
     }
 
     @Override
@@ -104,5 +102,21 @@ public class DeliveryImpl implements Delivery, DroneObserver {
             this.deliveryStatus.setDeliveryState(DeliveryState.DELIVERED);
         }
         this.observers.forEach(obs -> obs.notifyDeliveryEvent(event));
+    }
+
+    private void initDrone() {
+        final Drone drone = new DroneImpl(this.deliveryDetail);
+        drone.addDroneObserver(this);
+        Thread.ofVirtual().start(() -> {
+            try {
+                System.out.println("Waiting " + Instant.now().until(this.deliveryDetail.expectedShippingDate().toInstant(),
+                        ChronoUnit.MILLIS) / 1000);
+                Thread.sleep(Instant.now().until(this.deliveryDetail.expectedShippingDate().toInstant(),
+                        ChronoUnit.MILLIS) / 1000); // TODO change for testing
+                drone.startDrone();
+            } catch (final InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 }

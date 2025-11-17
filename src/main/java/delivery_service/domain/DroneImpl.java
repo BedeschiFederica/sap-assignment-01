@@ -3,7 +3,7 @@ package delivery_service.domain;
 import java.util.ArrayList;
 import java.util.List;
 
-class DroneImpl extends Thread implements Drone {
+class DroneImpl implements Drone, Runnable {
 
     private static final int DURATION_MULTIPLIER = 5;
     private static final int HOUR_IN_SECONDS = 1000;// 3600;
@@ -14,7 +14,6 @@ class DroneImpl extends Thread implements Drone {
     private final int deliveryDurationInHours;
 
     public DroneImpl(final DeliveryDetail deliveryDetail) {
-        super(deliveryDetail.getId().id().replace("delivery", "drone"));
         this.deliveryDetail = deliveryDetail;
         this.droneObservers = new ArrayList<>();
         this.deliveryDurationInHours = DURATION_MULTIPLIER * ((int) this.deliveryDetail.weight());
@@ -22,12 +21,11 @@ class DroneImpl extends Thread implements Drone {
 
     @Override
     public void startDrone() {
-        this.start(); // TODO: to start when expectedShippingTime
+        Thread.ofVirtual().start(this);
     }
 
     @Override
     public void run() {
-        System.out.println(this.droneObservers);
         this.notifyDeliveryEvent(new Shipped(
                 this.deliveryDetail.getId(),
                 new DeliveryTime(this.deliveryDurationInHours / 24, this.deliveryDurationInHours % 24)
