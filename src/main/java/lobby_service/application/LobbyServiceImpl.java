@@ -26,11 +26,13 @@ public class LobbyServiceImpl implements LobbyService {
 		try {
 			final UserId id = new UserId(userId);
 			if (!this.accountService.isValidPassword(id, password)) {
-				throw new LoginFailedException();
+				throw new LoginFailedException("Wrong password");
 			}
 			return this.userSessionRepository.createSession(id);
-		} catch (final UserNotFoundException | ServiceNotAvailableException  ex) {
-			throw new LoginFailedException();
+		} catch (final UserNotFoundException ex) {
+			throw new LoginFailedException("Username does not exist");
+		} catch (final ServiceNotAvailableException ex) {
+			throw new LoginFailedException("Service not available");
 		}
 	}
 
