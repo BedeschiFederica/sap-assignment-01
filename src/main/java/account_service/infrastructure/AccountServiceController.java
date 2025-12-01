@@ -19,9 +19,7 @@ import java.util.logging.Logger;
 
 /**
  *
- * TicTacToe Account Service controller
- *
- * @author aricci
+ * Account Service controller
  *
  */
 public class AccountServiceController extends VerticleBase {
@@ -45,7 +43,7 @@ public class AccountServiceController extends VerticleBase {
 	}
 
 	public Future<?> start() {
-		logger.log(Level.INFO, "TTT Game Service initializing...");
+		logger.log(Level.INFO, "Account Service initializing...");
 		HttpServer server = vertx.createHttpServer();
 
 		Router router = Router.router(vertx);
