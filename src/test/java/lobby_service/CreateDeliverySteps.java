@@ -112,8 +112,6 @@ public class CreateDeliverySteps {
             final String startingPlace,
             final String destinationPlace,
             final String expectedShippingMoment) {
-        System.out.println("time: " + (new Calendar.Builder().setInstant(
-                Date.from(Instant.now().plus(Integer.parseInt(expectedShippingMoment), ChronoUnit.DAYS))).build()).toInstant());
         this.createDelivery(weight, startingPlace, destinationPlace,
                 Optional.of(new Calendar.Builder().setInstant(
                         Date.from(Instant.now().plus(Integer.parseInt(expectedShippingMoment), ChronoUnit.DAYS))).build()

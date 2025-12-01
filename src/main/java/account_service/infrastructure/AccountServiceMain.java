@@ -3,6 +3,11 @@ package account_service.infrastructure;
 import account_service.application.AccountServiceImpl;
 import io.vertx.core.Vertx;
 
+/**
+ * @author Bedeschi Federica   federica.bedeschi4@studio.unibo.it
+ * @author Pracucci Filippo    filippo.pracucci@studio.unibo.it
+ */
+
 public class AccountServiceMain {
 
 	static final int ACCOUNT_SERVICE_PORT = 9000;

@@ -91,7 +91,6 @@ public class FileBasedAccountRepository implements AccountRepository {
 				this.userAccounts.put(acc.getId(), acc);
 			}
 		} catch (Exception ex) {
-			//	ex.printStackTrace();
 			logger.info("DB not found, creating an empty one.");
 			saveOnDB();
 		}

@@ -3,6 +3,11 @@ package lobby_service.infrastructure;
 import lobby_service.application.*;
 import io.vertx.core.Vertx;
 
+/**
+ * @author Bedeschi Federica   federica.bedeschi4@studio.unibo.it
+ * @author Pracucci Filippo    filippo.pracucci@studio.unibo.it
+ */
+
 public class LobbyServiceMain {
 
 	static final int LOBBY_SERVICE_PORT = 9001;

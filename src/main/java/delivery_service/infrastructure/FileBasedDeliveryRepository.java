@@ -99,7 +99,6 @@ public class FileBasedDeliveryRepository implements DeliveryRepository {
 				this.deliveries.put(delivery.getId(), delivery);
 			}
 		} catch (Exception ex) {
-			//	ex.printStackTrace();
 			logger.info("DB not found, creating an empty one.");
 			saveOnDB();
 		}

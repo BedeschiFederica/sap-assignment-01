@@ -6,7 +6,7 @@ import java.util.List;
 class DroneImpl implements Drone, Runnable {
 
     private static final int DURATION_MULTIPLIER = 5;
-    private static final int HOUR_IN_SECONDS = 1000;// 3600;
+    private static final int HOUR_IN_SECONDS = 3600;
     private static final int HOURS_IN_A_DAY = 24;
     private static final int PERIOD_IN_HOURS = 1;
 

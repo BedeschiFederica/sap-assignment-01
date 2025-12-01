@@ -81,7 +81,6 @@ public class DeliveryImpl implements Delivery, DroneObserver {
 
     @Override
     public void notifyDeliveryEvent(final DeliveryEvent event) {
-        System.out.println("Event " + event);
         if (event instanceof Shipped) {
             this.deliveryStatus.setDeliveryState(DeliveryState.SHIPPING);
             this.deliveryStatus.setTimeLeft(((Shipped) event).timeLeft());
@@ -98,12 +97,9 @@ public class DeliveryImpl implements Delivery, DroneObserver {
         drone.addDroneObserver(this);
         Thread.ofVirtual().start(() -> {
             try {
-                System.out.println("ExpectedShippingMoment " + this.deliveryDetail.expectedShippingMoment().toInstant());
                 if (this.deliveryDetail.expectedShippingMoment().toInstant().isAfter(Instant.now())) {
-                    System.out.println("Waiting " + Instant.now().until(
-                            this.deliveryDetail.expectedShippingMoment().toInstant(), ChronoUnit.MILLIS) / 1000);
                     Thread.sleep(Instant.now().until(this.deliveryDetail.expectedShippingMoment().toInstant(),
-                            ChronoUnit.MILLIS) / 1000); // TODO change for testing
+                            ChronoUnit.MILLIS));
                 }
                 drone.startDrone();
             } catch (final InterruptedException e) {

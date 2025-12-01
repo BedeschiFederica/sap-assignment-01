@@ -8,7 +8,5 @@ public interface Account extends Entity<UserId> {
 
     String getPassword();
 
-    // void updatePassword(String password);
-
     long getWhenCreated();
 }
