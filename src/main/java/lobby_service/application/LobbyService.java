@@ -1,7 +1,7 @@
 package lobby_service.application;
 
 import common.hexagonal.InBoundPort;
-import delivery_service.domain.Address;
+import lobby_service.domain.Address;
 import lobby_service.domain.DeliveryId;
 
 import java.util.Calendar;

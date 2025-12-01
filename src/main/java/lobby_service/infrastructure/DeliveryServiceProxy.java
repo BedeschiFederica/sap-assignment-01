@@ -1,7 +1,7 @@
 package lobby_service.infrastructure;
 
 import common.hexagonal.Adapter;
-import delivery_service.domain.Address;
+import lobby_service.domain.Address;
 import io.vertx.core.json.JsonObject;
 import lobby_service.application.*;
 import lobby_service.domain.DeliveryId;

@@ -1,6 +1,6 @@
 package lobby_service.application;
 
-import delivery_service.domain.Address;
+import lobby_service.domain.Address;
 import lobby_service.domain.*;
 
 import java.util.Calendar;
