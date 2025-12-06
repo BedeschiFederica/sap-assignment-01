@@ -118,7 +118,7 @@ public class FileBasedDeliveryRepository implements DeliveryRepository {
 			usersDB.flush();
 			usersDB.close();
 		} catch (Exception ex) {
-			ex.printStackTrace();
+			logger.severe(ex.getMessage());
 		}
 	}
 }

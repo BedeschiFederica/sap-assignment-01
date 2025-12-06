@@ -1,5 +1,6 @@
 package lobby_service.infrastructure;
 
+import lobby_service.domain.TimeConverter;
 import lobby_service.application.LobbyService;
 import lobby_service.application.LoginFailedException;
 import lobby_service.domain.DeliveryId;
@@ -12,11 +13,10 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.StaticHandler;
+import lobby_service.domain.UserId;
 
-import java.time.Instant;
 import java.util.Calendar;
 import java.util.Optional;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -42,13 +42,12 @@ public class LobbyServiceController extends VerticleBase  {
 	
 	public LobbyServiceController(final LobbyService service, final int port) {
 		this.port = port;
-		logger.setLevel(Level.INFO);
 		this.lobbyService = service;
 
 	}
 
 	public Future<?> start() {
-		logger.log(Level.INFO, "Lobby Service initializing...");
+		logger.info("Lobby Service initializing...");
 		HttpServer server = vertx.createHttpServer();
 
 		/* REST API routes */
@@ -64,7 +63,7 @@ public class LobbyServiceController extends VerticleBase  {
 		var fut = server
 			.requestHandler(router)
 			.listen(port);
-		fut.onSuccess(res -> logger.log(Level.INFO, "Lobby Service ready - port: " + port));
+		fut.onSuccess(res -> logger.info("Lobby Service ready - port: " + port));
 		return fut;
 	}
 	
@@ -77,15 +76,15 @@ public class LobbyServiceController extends VerticleBase  {
 	 * @param context
 	 */
 	protected void login(final RoutingContext context) {
-		logger.log(Level.INFO, "Login request");
+		logger.info("Login request");
 		context.request().handler(buf -> {
 			JsonObject userInfo = buf.toJsonObject();
-			logger.log(Level.INFO, "Payload: " + userInfo);
+			logger.info("Payload: " + userInfo);
 			String userId = context.pathParam("accountId");
 			String password = userInfo.getString("password");
 			var reply = new JsonObject();
 			try {
-				String userSessionId = lobbyService.login(userId, password);
+				String userSessionId = lobbyService.login(new UserId(userId), password);
 				reply.put("result", "ok");
 				var createPath = CREATE_DELIVERY_RESOURCE_PATH.replace(":sessionId", userSessionId);
 				var trackPath = TRACK_DELIVERY_RESOURCE_PATH.replace(":sessionId", userSessionId);
@@ -111,16 +110,17 @@ public class LobbyServiceController extends VerticleBase  {
 	 * @param context
 	 */
 	protected void createDelivery(final RoutingContext context) {
-		logger.log(Level.INFO, "Create delivery request");
+		logger.info("Create delivery request");
 		context.request().handler(buf -> {
 			final JsonObject deliveryDetailJson = buf.toJsonObject();
 			String userSessionId = context.pathParam("sessionId");
 			var reply = new JsonObject();
 			try {
 				final Optional<Calendar> expectedShippingMoment = DeliveryJsonConverter.getExpectedShippingMoment(deliveryDetailJson);
-				if (expectedShippingMoment.isPresent() && expectedShippingMoment.get().toInstant().isBefore(Instant.now())) {
+				if (expectedShippingMoment.isPresent() && expectedShippingMoment.get().toInstant()
+						.isBefore(TimeConverter.getNowAsInstant())) {
 					reply.put("result", "error");
-					reply.put("error", "past-target-time");
+					reply.put("error", "past-shipping-moment");
 				} else {
 					final DeliveryId deliveryId = this.lobbyService.createNewDelivery(
 							userSessionId,
@@ -150,7 +150,7 @@ public class LobbyServiceController extends VerticleBase  {
 	 * @param context
 	 */
 	protected void trackDelivery(RoutingContext context) {
-		logger.log(Level.INFO, "Track delivery request");
+		logger.info("Track delivery request");
 		context.request().handler(buf -> {
 			final String userSessionId = context.pathParam("sessionId");
 			final String deliveryId = buf.toJsonObject().getString("deliveryId");
@@ -160,10 +160,9 @@ public class LobbyServiceController extends VerticleBase  {
 				reply.put("result", "ok");
 				reply.put("trackingSessionId", trackingSessionId);
 				reply.put("trackingSessionLink", DELIVERY_SERVICE_URI + "/" + deliveryId + "/" + trackingSessionId);
-				reply.put("result", "ok");
 				sendReply(context.response(), reply);
 			} catch (Exception ex) {
-				ex.printStackTrace();
+				logger.severe(ex.getMessage());
 				reply.put("result", "error");
 				reply.put("error", ex.getMessage());
 				sendReply(context.response(), reply);

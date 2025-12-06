@@ -6,7 +6,7 @@ import java.util.List;
 class DroneImpl implements Drone, Runnable {
 
     private static final int DURATION_MULTIPLIER = 5;
-    private static final int HOUR_IN_SECONDS = 3600;
+    private static final int HOUR_IN_MILLISECONDS = 3_600_000;
     private static final int HOURS_IN_A_DAY = 24;
     private static final int PERIOD_IN_HOURS = 1;
 
@@ -36,7 +36,7 @@ class DroneImpl implements Drone, Runnable {
         ));
         for (int i = 0; i < this.deliveryDurationInHours; i++) {
             try {
-                Thread.sleep(PERIOD_IN_HOURS * HOUR_IN_SECONDS);
+                Thread.sleep(PERIOD_IN_HOURS * HOUR_IN_MILLISECONDS);
             } catch (final InterruptedException e) {
                 throw new RuntimeException(e);
             }

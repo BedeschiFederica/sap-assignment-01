@@ -5,7 +5,6 @@ import lobby_service.domain.*;
 
 import java.util.Calendar;
 import java.util.Optional;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -21,14 +20,13 @@ public class LobbyServiceImpl implements LobbyService {
     private DeliveryService deliveryService;
     
     @Override
-	public String login(final String userId, final String password) throws LoginFailedException {
-		logger.log(Level.INFO, "Login: " + userId + " " + password);
+	public String login(final UserId userId, final String password) throws LoginFailedException {
+		logger.info("Login: " + userId.id() + " " + password);
 		try {
-			final UserId id = new UserId(userId);
-			if (!this.accountService.isValidPassword(id, password)) {
+			if (!this.accountService.isValidPassword(userId, password)) {
 				throw new LoginFailedException("Wrong password");
 			}
-			return this.userSessionRepository.createSession(id);
+			return this.userSessionRepository.createSession(userId);
 		} catch (final UserNotFoundException ex) {
 			throw new LoginFailedException("Username does not exist");
 		} catch (final ServiceNotAvailableException ex) {
@@ -44,7 +42,7 @@ public class LobbyServiceImpl implements LobbyService {
 			if (this.userSessionRepository.isPresent(userSessionId)) {
 				final DeliveryId deliveryId = this.deliveryService.createNewDelivery(weight, startingPlace,
 						destinationPlace, expectedShippingMoment);
-				logger.log(Level.INFO, "create new delivery " + deliveryId.id() + " by " + userSessionId);
+				logger.info("create new delivery " + deliveryId.id() + " by " + userSessionId);
 				return deliveryId;
 			} else {
 				throw new CreateDeliveryFailedException("User is not logged in");
@@ -56,7 +54,7 @@ public class LobbyServiceImpl implements LobbyService {
 
 	@Override
 	public String trackDelivery(final String userSessionId, final DeliveryId deliveryId) throws TrackDeliveryFailedException {
-		logger.log(Level.INFO, "Track delivery " + userSessionId + " " + deliveryId);
+		logger.info("Track delivery " + userSessionId + " " + deliveryId);
 		try {
 			if (this.userSessionRepository.isPresent(userSessionId)) {
 				return this.deliveryService.trackDelivery(deliveryId);
